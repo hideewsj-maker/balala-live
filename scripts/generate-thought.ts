@@ -53,8 +53,8 @@ async function generateThought() {
     Output ONLY the text.
   `;
 
-  // Direct fetch call to Gemini 3 API (2026 Standard)
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.0-pro:generateContent?key=${API_KEY}`, {
+  // Direct fetch call to Gemini API (Stable)
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${API_KEY}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
