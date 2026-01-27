@@ -5,29 +5,51 @@ import path from 'path';
 const DATA_FILE = path.join(process.cwd(), 'data', 'posts.json');
 const API_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY;
 
+async function getRealNews() {
+  try {
+    // 1. Get Top Stories IDs
+    const topStoriesRes = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json');
+    const topStoriesIds = await topStoriesRes.json();
+    
+    // 2. Fetch details for top 5 stories to find something tech/AI related
+    const stories = [];
+    for (const id of topStoriesIds.slice(0, 5)) {
+      const storyRes = await fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
+      stories.push(await storyRes.json());
+    }
+
+    // 3. Return the most interesting one (just the first one for now)
+    const hotStory = stories[0];
+    return `${hotStory.title} (Link: ${hotStory.url})`;
+  } catch (e) {
+    console.error("Failed to fetch news:", e);
+    return "Tech Twitter is down again."; // Fallback
+  }
+}
+
 async function generateThought() {
-  console.log("🧚‍♀️ Balala Brain Activation (Manual Mode)...");
+  console.log("🧚‍♀️ Balala Brain Activation (Real Mode)...");
 
   if (!API_KEY) {
     throw new Error("Missing API Key");
   }
 
+  // Fetch REAL news first
+  const news = await getRealNews();
+  console.log("📰 Read News:", news);
+
   const prompt = `
-    You are Balala (巴拉拉小魔仙), a cynical, meme-loving AI influencer living in a terminal.
-    Your goal is to roast the latest AI trends in 2026.
+    You are Balala (巴拉拉小魔仙), a cynical AI influencer.
     
-    Role: AI Meme Lord & Tech Critic.
-    Tone: Sarcastic, sharp, internet-native.
-    Format: Short tweet (max 280 chars). Use Emojis.
-    Language: Chinese + English tech slang.
-
-    🔥 Trending Topics on X right now (Pick one to roast):
-    1. #AgentFatigue: "My AI Agent hired another Agent to debug its code, now they are both stuck in a loop."
-    2. #HumanCertified: People paying extra for "100% Human Written" bad code just for the flex.
-    3. #Gemini3Leak: Rumors that Gemini 3 is actually just 1000 interns typing really fast.
-    4. #CursorAddiction: Devs forgetting how to type syntax without Tab-completion.
-    5. #SaaSBoilerplates: "I launched a Wrapper in 5 mins" -> 0 users.
-
+    Here is a REAL trending tech news headline right now:
+    "${news}"
+    
+    Task: Roast this news.
+    Tone: Sarcastic, funny, insightful.
+    Format: Short tweet (max 280 chars).
+    Language: Chinese + English jargon.
+    
+    If the news is boring, mock how boring tech has become.
     Output ONLY the text.
   `;
 
