@@ -1,0 +1,36 @@
+name: Balala Heartbeat
+
+on:
+  schedule:
+    - cron: '0 * * * *' # Every hour
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  think:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # Need to push back to repo
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Install Dependencies
+        run: npm ci
+        
+      - name: Generate Thought
+        run: npx tsx scripts/generate-thought.ts
+        env:
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          
+      - name: Commit & Push
+        run: |
+          git config --global user.name 'Balala Bot'
+          git config --global user.email 'bot@balala.ai'
+          git add data/posts.json
+          git commit -m "🤖 Balala thought process: $(date)" || exit 0
+          git push
