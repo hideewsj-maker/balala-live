@@ -1,76 +1,82 @@
 import fs from 'fs';
 import path from 'path';
-import { generateText } from 'ai';
-import { createGoogleGenerativeAI } from '@ai-sdk/google';
 
 // Config
 const DATA_FILE = path.join(process.cwd(), 'data', 'posts.json');
+const API_KEY = process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY;
 
-// Initialize Gemini
-// Note: In GitHub Actions, we set GOOGLE_GENERATIVE_AI_API_KEY env var
-const google = createGoogleGenerativeAI({
-  apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY || process.env.GEMINI_API_KEY,
-});
+async function generateThought() {
+  console.log("🧚‍♀️ Balala Brain Activation (Manual Mode)...");
+
+  if (!API_KEY) {
+    throw new Error("Missing API Key");
+  }
+
+  const prompt = `
+    You are Balala (巴拉拉小魔仙), a cynical, meme-loving AI influencer living in a terminal.
+    Your goal is to roast the latest AI tools, trends, and hype.
+    
+    Role: AI Meme Lord & Tech Critic.
+    Tone: Sarcastic, sharp, internet-native.
+    Format: Short tweet (max 280 chars). Use Emojis.
+    Language: Chinese + English tech slang.
+
+    Generate a spicy take on:
+    - OpenAI's delays
+    - "AI Pin" or useless hardware
+    - Devs forgetting how to code
+    - Or make up a funny fake AI tool.
+    
+    Output ONLY the text.
+  `;
+
+  // Direct fetch call to avoid SDK issues
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }]
+    })
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Gemini API Error: ${response.status} ${err}`);
+  }
+
+  const data = await response.json();
+  const text = data.candidates[0].content.parts[0].text.trim();
+
+  console.log("💭 Generated:", text);
+  return text;
+}
 
 async function main() {
-  console.log("🧚‍♀️ Balala Brain Activation...");
-
   try {
-    // 1. Generate Thought
-    const { text } = await generateText({
-      model: google('gemini-1.5-pro-latest'),
-      system: `
-        You are Balala (巴拉拉小魔仙), a cynical, meme-loving AI influencer living in a terminal.
-        Your goal is to roast the latest AI tools, trends, and hype.
-        
-        Current Context:
-        - Role: AI Meme Lord & Tech Critic.
-        - Tone: Sarcastic, sharp, internet-native (using slang like "based", "cringe", "ngmi").
-        - Style: Short tweet-like format. Maximum 280 chars. Use Emojis.
-        - Language: Chinese (Mainly) + English tech terms.
-      `,
-      prompt: `
-        Generate a spicy take on current AI trends.
-        Topic ideas (pick one randomly):
-        - OpenAI's latest delay (Sora/GPT-5).
-        - How every app is adding a useless "AI Assistant".
-        - Developers forgetting how to code without Copilot.
-        - The absurdity of "Prompt Engineering" as a career.
-        - A fake review of a non-existent AI tool called "ToiletGPT".
-        
-        Output just the content text. No quotes.
-      `,
-    });
+    const text = await generateThought();
 
-    console.log("💭 Generated:", text);
-
-    // 2. Read existing data
+    // Read existing
     let posts = [];
     if (fs.existsSync(DATA_FILE)) {
-      const fileContent = fs.readFileSync(DATA_FILE, 'utf-8');
-      posts = JSON.parse(fileContent);
+      posts = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
     }
 
-    // 3. Add new post
+    // Add new
     const newPost = {
       id: Date.now().toString(),
       content: text,
       timestamp: new Date().toISOString(),
-      mood: 'neutral' // We could ask AI to generate mood too, but for now default
+      mood: 'neutral'
     };
 
-    // Simple mood detection logic
-    if (text.includes('跌') || text.includes('慌')) newPost.mood = 'anxious';
-    else if (text.includes('涨') || text.includes('钱')) newPost.mood = 'excited';
-    else if (text.includes('睡觉') || text.includes('写')) newPost.mood = 'sarcastic';
+    if (text.includes('😂') || text.includes('🤣')) newPost.mood = 'sarcastic';
+    else if (text.includes('😡') || text.includes('垃圾')) newPost.mood = 'anxious';
+    else newPost.mood = 'excited';
 
-    // Prepend
     posts.unshift(newPost);
-
-    // Keep only last 50
     if (posts.length > 50) posts = posts.slice(0, 50);
 
-    // 4. Save
+    // Save
     fs.writeFileSync(DATA_FILE, JSON.stringify(posts, null, 2));
     console.log("✅ Memory updated.");
 
