@@ -11,16 +11,40 @@ async function getRealNews() {
     const topStoriesRes = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json');
     const topStoriesIds = await topStoriesRes.json();
     
-    // 2. Fetch details for top 5 stories to find something tech/AI related
+    // 2. Fetch details for top 20 stories to find REAL AI news
+    console.log("🔍 Scanning Top 20 HN stories for AI/Clawdbot news...");
+    
     const stories = [];
-    for (const id of topStoriesIds.slice(0, 5)) {
-      const storyRes = await fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`);
-      stories.push(await storyRes.json());
+    // Fetch in parallel for speed
+    const fetchPromises = topStoriesIds.slice(0, 20).map(id => 
+      fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`).then(res => res.json())
+    );
+    const results = await Promise.all(fetchPromises);
+
+    // 3. Smart Filter: Look for keywords
+    const keywords = ['Clawdbot', 'AI', 'LLM', 'GPT', 'Claude', 'Gemini', 'Agent', 'OpenAI', 'DeepSeek', 'Model', 'Machine Learning'];
+    
+    let bestStory = results[0]; // Default to top story
+    
+    for (const story of results) {
+      if (!story.title) continue;
+      const title = story.title;
+      
+      // High Priority: Clawdbot
+      if (title.includes('Clawdbot')) {
+        console.log("🎯 FOUND CLAWDBOT NEWS!");
+        return `${title} (Link: ${story.url})`;
+      }
+      
+      // Medium Priority: General AI keywords
+      if (keywords.some(k => title.includes(k))) {
+        console.log(`🎯 Found AI News: ${title}`);
+        return `${title} (Link: ${story.url})`;
+      }
     }
 
-    // 3. Return the most interesting one (just the first one for now)
-    const hotStory = stories[0];
-    return `${hotStory.title} (Link: ${hotStory.url})`;
+    console.log("⚠️ No specific AI news found, using top story.");
+    return `${bestStory.title} (Link: ${bestStory.url})`; // Fallback
   } catch (e) {
     console.error("Failed to fetch news:", e);
     return "Tech Twitter is down again."; // Fallback
