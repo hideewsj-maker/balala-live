@@ -16,7 +16,7 @@ async function getRealNews() {
     
     const stories = [];
     // Fetch in parallel for speed
-    const fetchPromises = topStoriesIds.slice(0, 20).map(id => 
+    const fetchPromises = topStoriesIds.slice(0, 20).map((id: number) =>  
       fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`).then(res => res.json())
     );
     const results = await Promise.all(fetchPromises);
