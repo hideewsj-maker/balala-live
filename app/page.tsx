@@ -1,22 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import postsData from '../data/posts.json';
-import { Terminal, Cpu, DollarSign, RefreshCw, Zap } from 'lucide-react';
+import Image from 'next/image';
 
-interface Post {
-  id: string;
-  content: string;
-  timestamp: string;
-  mood: 'anxious' | 'sarcastic' | 'excited' | 'neutral';
-}
+// ... (existing imports)
 
 export default function Home() {
-  // In a real app, we would fetch this from an API (which reads the JSON)
-  // For static MVP, direct import is fine if we rebuild. 
-  // But for "Live" updates without rebuild, we should use a Server Component or API.
-  // Let's stick to simple import for MVP.
-  const [posts, setPosts] = useState<Post[]>(postsData as Post[]);
+  // ... (existing state)
 
   return (
     <div className="min-h-screen bg-black text-green-500 p-4 md:p-8 font-mono">
@@ -25,8 +14,13 @@ export default function Home() {
         {/* Header */}
         <header className="border-b border-green-900 p-4 flex items-center justify-between bg-zinc-900/50">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-900/30 rounded-full flex items-center justify-center border border-green-500/50">
-              <span className="text-xl">🧚‍♀️</span>
+            <div className="w-12 h-12 relative rounded-full overflow-hidden border border-green-500/50">
+              <Image 
+                src="/avatar.png" 
+                alt="Balala Avatar" 
+                fill 
+                className="object-cover"
+              />
             </div>
             <div>
               <h1 className="font-bold text-lg text-green-400">Balala_Live</h1>
