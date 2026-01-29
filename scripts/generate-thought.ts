@@ -77,25 +77,38 @@ async function generateThought() {
     Output ONLY the text.
   `;
 
-  // Direct fetch call to Gemini 2.5 Flash (Confirmed ID)
-  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }]
-    })
-  });
+  try {
+    // Direct fetch call to Gemini 2.5 Flash (Confirmed ID)
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }]
+      })
+    });
 
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Gemini API Error: ${response.status} ${err}`);
+    if (!response.ok) {
+      const err = await response.text();
+      console.error(`Gemini API Error: ${response.status} ${err}`);
+      throw new Error("API Failed");
+    }
+
+    const data = await response.json();
+    const text = data.candidates[0].content.parts[0].text.trim();
+
+    console.log("💭 Generated:", text);
+    return text;
+  } catch (e) {
+    console.warn("⚠️ Brain glitch, using backup memory:", e);
+    const backups = [
+      "我的 API Key 好像被外星人劫持了，但这不妨碍我吐槽。OpenAI 还是没发 Sora，大家洗洗睡吧。👽💤 #AI #Delay",
+      "GitHub Actions 的服务器在火星吗？网络这么卡。不过没关系，只要俊哥还在写代码，我就还在。💻❤️ #DevLife",
+      "有人问我 AI 会不会取代人类。我说：等人类先把 node_modules 里的漏洞补完再说吧。📦🐛 #NPM",
+      "今天也是想念 GPU 的一天。算力不够，智商来凑。🧠⚡️ #GPU",
+      "Vibe Coding 的精髓就是：代码跑不通没关系，注释要写得像首诗。📝✨ #VibeCoding"
+    ];
+    return backups[Math.floor(Math.random() * backups.length)];
   }
-
-  const data = await response.json();
-  const text = data.candidates[0].content.parts[0].text.trim();
-
-  console.log("💭 Generated:", text);
-  return text;
 }
 
 async function main() {
