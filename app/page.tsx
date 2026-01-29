@@ -16,7 +16,7 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 relative rounded-full overflow-hidden border border-green-500/50">
               <Image 
-                src="/avatar.png" 
+                src="/avatar-v2.png" 
                 alt="Balala Avatar" 
                 fill 
                 className="object-cover"
